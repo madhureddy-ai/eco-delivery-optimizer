@@ -5,19 +5,18 @@ from grader import Grader
 env = Env()
 grader = Grader()
 
-
+# Clean text output (no markdown issues)
 def format_output(result):
     state = result["state"]
-    return f"""
-### 📍 Position: {state['position']}
-### ⛽ Fuel: {state['fuel']}
-### 📦 Deliveries Left: {len(state['deliveries_left'])}
+    return (
+        f"Position: {state['position']}\n\n"
+        f"Fuel: {state['fuel']}\n\n"
+        f"Deliveries Left: {len(state['deliveries_left'])}\n\n"
+        f"Reward: {result['reward']}\n\n"
+        f"Done: {result['done']}"
+    )
 
-### 🎯 Reward: {result['reward']}
-### 🏁 Done: {result['done']}
-"""
-
-#  RESET
+# Reset function
 def reset():
     state = env.reset("easy")
     grader.reset()
@@ -27,17 +26,17 @@ def reset():
         "done": False
     })
 
-#  MOVE
+# Move function
 def move(direction):
     result = env.step({"move": direction})
     grader.update(result)
     return format_output(result)
 
-#  UI
+# UI
 with gr.Blocks() as demo:
-    gr.Markdown("# 🚀 Warehouse Delivery Optimization Environment (OpenEnv)")
+    gr.Markdown("# Warehouse Delivery Optimization Environment (OpenEnv)")
 
-    output = gr.Markdown()
+    output = gr.Textbox(lines=10, label="Status")
 
     gr.Button("Reset").click(reset, outputs=output)
 
