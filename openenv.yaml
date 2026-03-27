@@ -1,0 +1,10 @@
+name: eco-delivery-env
+description: Delivery route optimization environment
+version: 0.1.0
+
+entrypoint: main:app
+
+tasks:
+  - easy
+  - medium
+  - hard
