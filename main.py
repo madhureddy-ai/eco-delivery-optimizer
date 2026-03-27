@@ -14,9 +14,10 @@ class Action(BaseModel):
     move: str
 
 
+# ✅ ONLY ONE ROOT ROUTE
 @app.get("/")
 def home():
-    return {"msg": "working"}
+    return {"message": "API is running"}
 
 
 @app.post("/reset")
