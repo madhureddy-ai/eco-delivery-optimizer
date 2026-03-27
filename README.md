@@ -3,8 +3,8 @@ title: eco-delivery-optimizer
 emoji: 🚀
 colorFrom: blue
 colorTo: green
-sdk: docker
-app_file: main.py
+sdk: gradio
+app_file: ui.py
 pinned: false
 ---
 
