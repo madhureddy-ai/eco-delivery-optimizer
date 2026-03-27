@@ -1,15 +1,19 @@
 import gradio as gr
-import requests
+from environment import Env
+from grader import Grader
 
-BASE_URL = "http://127.0.0.1:7860"
+env = Env()
+grader = Grader()
 
 def reset():
-    res = requests.post(f"{BASE_URL}/reset", json={"task": "easy"})
-    return res.json()
+    state = env.reset("easy")
+    grader.reset()
+    return state
 
 def move(direction):
-    res = requests.post(f"{BASE_URL}/step", json={"move": direction})
-    return res.json()
+    result = env.step({"move": direction})
+    grader.update(result)
+    return result
 
 with gr.Blocks() as demo:
     gr.Markdown("# 🚀 Warehouse Delivery Optimization Environment (OpenEnv)")
