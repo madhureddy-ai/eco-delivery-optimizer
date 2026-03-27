@@ -1,12 +1,14 @@
 import gradio as gr
 import requests
 
+BASE_URL = "http://127.0.0.1:7860"
+
 def reset():
-    res = requests.post("/reset", json={"task": "easy"})
+    res = requests.post(f"{BASE_URL}/reset", json={"task": "easy"})
     return res.json()
 
 def move(direction):
-    res = requests.post("/step", json={"move": direction})
+    res = requests.post(f"{BASE_URL}/step", json={"move": direction})
     return res.json()
 
 with gr.Blocks() as demo:
