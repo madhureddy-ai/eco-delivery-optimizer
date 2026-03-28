@@ -5,15 +5,13 @@ from grader import Grader
 env = Env()
 grader = Grader()
 
-# ✅ GRID RENDER FUNCTION
+# GRID
 def render_grid(state, size=5):
     grid = [["⬜" for _ in range(size)] for _ in range(size)]
 
-    # Agent
     ax, ay = state["position"]
     grid[ax][ay] = "🚗"
 
-    # Deliveries
     for dx, dy in state["deliveries_left"]:
         if grid[dx][dy] == "🚗":
             grid[dx][dy] = "🚗📦"
@@ -23,7 +21,7 @@ def render_grid(state, size=5):
     return "\n".join([" ".join(row) for row in grid])
 
 
-# ✅ CLEAN OUTPUT WITH GRID
+# OUTPUT
 def format_output(result):
     state = result["state"]
     grid = render_grid(state)
@@ -42,7 +40,6 @@ def format_output(result):
     )
 
 
-# ✅ RESET
 def reset():
     state = env.reset("easy")
     grader.reset()
@@ -53,14 +50,13 @@ def reset():
     })
 
 
-# ✅ MOVE
 def move(direction):
     result = env.step({"move": direction})
     grader.update(result)
     return format_output(result)
 
 
-# ✅ AUTO AGENT (KEY FEATURE)
+# AUTO AGENT
 def auto_move():
     state = env.state()
     ax, ay = state["position"]
@@ -73,7 +69,6 @@ def auto_move():
             "done": True
         })
 
-    # nearest delivery (Manhattan distance)
     target = min(deliveries, key=lambda d: abs(d[0]-ax) + abs(d[1]-ay))
     tx, ty = target
 
@@ -91,23 +86,17 @@ def auto_move():
     return format_output(result)
 
 
-# ✅ UI
 with gr.Blocks() as demo:
     gr.Markdown("# 🚀 AI-Powered Warehouse Delivery Optimization System")
 
     output = gr.Textbox(lines=15, label="Live Simulation")
 
-    # Reset
     gr.Button("🔄 Reset").click(reset, outputs=output)
 
-    # Manual controls
     with gr.Row():
         gr.Button("⬆ Up").click(lambda: move("up"), outputs=output)
         gr.Button("⬇ Down").click(lambda: move("down"), outputs=output)
         gr.Button("⬅ Left").click(lambda: move("left"), outputs=output)
         gr.Button("➡ Right").click(lambda: move("right"), outputs=output)
 
-    # 🔥 AUTO BUTTON
     gr.Button("🤖 Run Auto-Agent").click(auto_move, outputs=output)
-
-demo.launch()
