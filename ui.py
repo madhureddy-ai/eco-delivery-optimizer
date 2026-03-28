@@ -15,8 +15,9 @@ def format_output(result):
         f"Done: {result['done']}"
     )
 
-def reset():
-    state = env.reset("easy")
+# RESET WITH TASK INPUT
+def reset(task):
+    state = env.reset(task)
     grader.reset()
     return format_output({
         "state": state,
@@ -32,9 +33,17 @@ def move(direction):
 with gr.Blocks() as demo:
     gr.Markdown("# Warehouse Delivery Optimization Environment (OpenEnv)")
 
+    # ✅ THIS IS NEW (DROPDOWN)
+    task_select = gr.Dropdown(
+        ["easy", "medium", "hard"],
+        value="easy",
+        label="Select Task"
+    )
+
     output = gr.Textbox(lines=10, label="Status")
 
-    gr.Button("Reset").click(reset, outputs=output)
+    # ✅ CONNECT DROPDOWN
+    gr.Button("Reset").click(reset, inputs=task_select, outputs=output)
 
     with gr.Row():
         gr.Button("Up").click(lambda: move("up"), outputs=output)
