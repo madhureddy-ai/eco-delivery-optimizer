@@ -5,18 +5,44 @@ from grader import Grader
 env = Env()
 grader = Grader()
 
-# Clean text output (no markdown issues)
+# ✅ GRID RENDER FUNCTION
+def render_grid(state, size=5):
+    grid = [["⬜" for _ in range(size)] for _ in range(size)]
+
+    # Agent
+    ax, ay = state["position"]
+    grid[ax][ay] = "🚗"
+
+    # Deliveries
+    for dx, dy in state["deliveries_left"]:
+        if grid[dx][dy] == "🚗":
+            grid[dx][dy] = "🚗📦"
+        else:
+            grid[dx][dy] = "📦"
+
+    return "\n".join([" ".join(row) for row in grid])
+
+
+# ✅ CLEAN OUTPUT WITH GRID
 def format_output(result):
     state = result["state"]
+    grid = render_grid(state)
+
+    fuel_used = max(1, (20 - state["fuel"]))
+    efficiency = result["reward"] / fuel_used
+
     return (
-        f"Position: {state['position']}\n\n"
-        f"Fuel: {state['fuel']}\n\n"
-        f"Deliveries Left: {len(state['deliveries_left'])}\n\n"
-        f"Reward: {result['reward']}\n\n"
-        f"Done: {result['done']}"
+        f"{grid}\n\n"
+        f"🚗 Position: {state['position']}\n"
+        f"⛽ Energy: {state['fuel']}\n"
+        f"📦 Deliveries Left: {len(state['deliveries_left'])}\n"
+        f"💰 Cost Savings: {round(result['reward'],2)}\n"
+        f"⚡ Efficiency: {round(efficiency,2)}\n"
+        f"🏁 Done: {result['done']}"
     )
 
-# Reset function
+
+# ✅ RESET
 def reset():
     state = env.reset("easy")
     grader.reset()
@@ -26,24 +52,62 @@ def reset():
         "done": False
     })
 
-# Move function
+
+# ✅ MOVE
 def move(direction):
     result = env.step({"move": direction})
     grader.update(result)
     return format_output(result)
 
-# UI
+
+# ✅ AUTO AGENT (KEY FEATURE)
+def auto_move():
+    state = env.state()
+    ax, ay = state["position"]
+
+    deliveries = state["deliveries_left"]
+    if not deliveries:
+        return format_output({
+            "state": state,
+            "reward": 0,
+            "done": True
+        })
+
+    # nearest delivery (Manhattan distance)
+    target = min(deliveries, key=lambda d: abs(d[0]-ax) + abs(d[1]-ay))
+    tx, ty = target
+
+    if ax < tx:
+        direction = "down"
+    elif ax > tx:
+        direction = "up"
+    elif ay < ty:
+        direction = "right"
+    else:
+        direction = "left"
+
+    result = env.step({"move": direction})
+    grader.update(result)
+    return format_output(result)
+
+
+# ✅ UI
 with gr.Blocks() as demo:
-    gr.Markdown("# Warehouse Delivery Optimization Environment (OpenEnv)")
+    gr.Markdown("# 🚀 AI-Powered Warehouse Delivery Optimization System")
 
-    output = gr.Textbox(lines=10, label="Status")
+    output = gr.Textbox(lines=15, label="Live Simulation")
 
-    gr.Button("Reset").click(reset, outputs=output)
+    # Reset
+    gr.Button("🔄 Reset").click(reset, outputs=output)
 
+    # Manual controls
     with gr.Row():
-        gr.Button("Up").click(lambda: move("up"), outputs=output)
-        gr.Button("Down").click(lambda: move("down"), outputs=output)
-        gr.Button("Left").click(lambda: move("left"), outputs=output)
-        gr.Button("Right").click(lambda: move("right"), outputs=output)
+        gr.Button("⬆ Up").click(lambda: move("up"), outputs=output)
+        gr.Button("⬇ Down").click(lambda: move("down"), outputs=output)
+        gr.Button("⬅ Left").click(lambda: move("left"), outputs=output)
+        gr.Button("➡ Right").click(lambda: move("right"), outputs=output)
+
+    # 🔥 AUTO BUTTON
+    gr.Button("🤖 Run Auto-Agent").click(auto_move, outputs=output)
 
 demo.launch()

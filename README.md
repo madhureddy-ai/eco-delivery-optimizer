@@ -1,5 +1,5 @@
 ---
-title: eco-delivery-optimizer
+title: Warehouse Delivery Optimization Environment (OpenEnv)
 emoji: 🚀
 colorFrom: blue
 colorTo: green
@@ -7,11 +7,6 @@ sdk: gradio
 app_file: ui.py
 pinned: false
 ---
-
-# Warehouse Delivery Optimization Environment (OpenEnv)
-
-## Description
-...
 
 # Warehouse Delivery Optimization Environment (OpenEnv)
 
