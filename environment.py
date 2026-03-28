@@ -1,62 +1,48 @@
-from tasks import TASKS
-
-
 class Env:
     def __init__(self):
         self.grid_size = 5
-        self.reset()
 
     def reset(self, task="easy"):
-        config = TASKS.get(task, TASKS["easy"])
+        from tasks import TASKS
+        self.agent_pos = [0, 0]
+        self.deliveries = TASKS[task]["deliveries"]
+        self.fuel = TASKS[task]["fuel"]
+        self.done = False
 
-        self.pos = [0, 0]
-        self.fuel = config["fuel"]
-        self.deliveries = [tuple(d) for d in config["deliveries"]]
-        self.steps = 0
-
-        return self.state()
-
-    def state(self):
-        return {
-            "position": self.pos,
-            "fuel": self.fuel,
-            "deliveries_left": self.deliveries
-        }
+        return self._get_state()
 
     def step(self, action):
-        move = action.get("move", "up")
+        if self.done:
+            return {"state": self._get_state(), "reward": 0, "done": True}
 
-        old_pos = self.pos.copy()
+        move = action["move"]
 
         if move == "up":
-            self.pos[0] -= 1
+            self.agent_pos[0] = max(0, self.agent_pos[0] - 1)
         elif move == "down":
-            self.pos[0] += 1
+            self.agent_pos[0] = min(self.grid_size - 1, self.agent_pos[0] + 1)
         elif move == "left":
-            self.pos[1] -= 1
+            self.agent_pos[1] = max(0, self.agent_pos[1] - 1)
         elif move == "right":
-            self.pos[1] += 1
-
-        if not (0 <= self.pos[0] < self.grid_size and 0 <= self.pos[1] < self.grid_size):
-            self.pos = old_pos
-            reward = -0.5
-        else:
-            reward = -0.1
+            self.agent_pos[1] = min(self.grid_size - 1, self.agent_pos[1] + 1)
 
         self.fuel -= 1
-        self.steps += 1
 
-        if tuple(self.pos) in self.deliveries:
-            self.deliveries.remove(tuple(self.pos))
-            reward += 1.0
+        reward = -0.1
 
-        done = (self.fuel <= 0) or (len(self.deliveries) == 0)
+        # Check delivery
+        if tuple(self.agent_pos) in self.deliveries:
+            self.deliveries.remove(tuple(self.agent_pos))
+            reward += 1
 
-        if self.fuel < 0:
-            self.fuel = 0
+        if self.fuel <= 0 or len(self.deliveries) == 0:
+            self.done = True
 
+        return {"state": self._get_state(), "reward": reward, "done": self.done}
+
+    def _get_state(self):
         return {
-            "state": self.state(),
-            "reward": reward,
-            "done": done
+            "position": self.agent_pos,
+            "fuel": self.fuel,
+            "deliveries_left": self.deliveries
         }
