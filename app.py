@@ -1,3 +1,3 @@
 from ui import demo
 
-demo.launch()
+demo.queue().launch()
