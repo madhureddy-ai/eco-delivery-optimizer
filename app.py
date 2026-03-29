@@ -1,15 +1,21 @@
-from fastapi import FastAPI
 import gradio as gr
+from fastapi import FastAPI
+from pydantic import BaseModel
+
 from environment import Env
 from grader import Grader
-
-app = FastAPI()
 
 env = Env()
 grader = Grader()
 
-# ---------- CORE LOGIC ----------
+# ---------------- API MODELS ----------------
+class ResetRequest(BaseModel):
+    task: str
 
+class StepRequest(BaseModel):
+    move: str
+
+# ---------------- CORE LOGIC ----------------
 def format_output(result):
     state = result["state"]
     return {
@@ -20,10 +26,7 @@ def format_output(result):
         "done": result["done"]
     }
 
-# ---------- API ENDPOINTS (IMPORTANT) ----------
-
-@app.post("/reset")
-def reset_api(task: str = "easy"):
+def reset_logic(task):
     state = env.reset(task)
     grader.reset()
     return format_output({
@@ -32,23 +35,30 @@ def reset_api(task: str = "easy"):
         "done": False
     })
 
-@app.post("/step")
-def step_api(action: dict):
-    result = env.step(action)
+def step_logic(move):
+    result = env.step({"move": move})
     grader.update(result)
     return format_output(result)
 
-@app.get("/tasks")
-def get_tasks():
-    return ["easy", "medium", "hard"]
+# ---------------- FASTAPI ----------------
+app = FastAPI()
 
-# ---------- GRADIO UI ----------
+@app.post("/reset")
+def reset_api(req: ResetRequest):
+    return reset_logic(req.task)
 
-def reset_ui(task):
-    return str(reset_api(task))
+@app.post("/step")
+def step_api(req: StepRequest):
+    return step_logic(req.move)
 
-def move_ui(direction):
-    return str(step_api({"move": direction}))
+# ---------------- GRADIO UI ----------------
+def ui_reset(task):
+    result = reset_logic(task)
+    return str(result)
+
+def ui_move(direction):
+    result = step_logic(direction)
+    return str(result)
 
 with gr.Blocks() as demo:
     gr.Markdown("# Warehouse Delivery Optimization Environment (OpenEnv)")
@@ -61,12 +71,14 @@ with gr.Blocks() as demo:
 
     output = gr.Textbox(lines=10, label="Status")
 
-    gr.Button("Reset").click(reset_ui, inputs=task_select, outputs=output)
+    gr.Button("Reset").click(ui_reset, inputs=task_select, outputs=output)
 
     with gr.Row():
-        gr.Button("Up").click(lambda: move_ui("up"), outputs=output)
-        gr.Button("Down").click(lambda: move_ui("down"), outputs=output)
-        gr.Button("Left").click(lambda: move_ui("left"), outputs=output)
-        gr.Button("Right").click(lambda: move_ui("right"), outputs=output)
+        gr.Button("Up").click(lambda: ui_move("up"), outputs=output)
+        gr.Button("Down").click(lambda: ui_move("down"), outputs=output)
+        gr.Button("Left").click(lambda: ui_move("left"), outputs=output)
+        gr.Button("Right").click(lambda: ui_move("right"), outputs=output)
 
-demo.launch()
+# ---------------- MOUNT ----------------
+from gradio.routes import mount_gradio_app
+app = mount_gradio_app(app, demo, path="/")
